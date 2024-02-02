@@ -46,6 +46,13 @@
 
         public void Insert(byte[] bytes)
         {
+            ArgumentNullException.ThrowIfNull(bytes);
+            EnsureWritable();
+            if (bytes.Length == 0)
+            {
+                return;
+            }
+
             if (EOF)
             {
                 source.Write(bytes);
@@ -62,6 +69,70 @@
                 source.Write(bytes);
                 scratch.CopyTo(source);
             }
+        }
+
+        public void Write(byte[] bytes)
+        {
+            ArgumentNullException.ThrowIfNull(bytes);
+            EnsureWritable();
+            if (bytes.Length == 0)
+            {
+                return;
+            }
+            source.Write(bytes);
+        }
+
+        public void Write(byte[] buffer, int offset, int count)
+        {
+            ArgumentNullException.ThrowIfNull(buffer);
+            ArgumentOutOfRangeException.ThrowIfLessThan(offset, 0);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(offset, buffer.Length);
+            ArgumentOutOfRangeException.ThrowIfLessThan(count, 0);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(count, buffer.Length - offset);
+
+            EnsureWritable();
+
+            if (count == 0)
+            {
+                return;
+            }
+
+            source.Write(buffer, offset, count);
+        }
+
+        public byte[] Read(int count)
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(count, 0);
+            EnsureReady();
+            if (count == 0)
+            {
+                return [];
+            }
+            var ret = new byte[count];
+            var read = source.Read(ret);
+            if (read != count)
+            {
+                throw new IOException($"Requested {count} bytes but only {read} could be read");
+            }
+            return ret;
+        }
+
+        public int Read(byte[] buffer, int offset, int count)
+        {
+            ArgumentNullException.ThrowIfNull(buffer);
+            ArgumentOutOfRangeException.ThrowIfLessThan(offset, 0);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(offset, buffer.Length);
+            ArgumentOutOfRangeException.ThrowIfLessThan(count, 0);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(count, buffer.Length - offset);
+
+            EnsureReady();
+
+            if (count == 0)
+            {
+                return 0;
+            }
+
+            return source.Read(buffer, offset, count);
         }
 
         public void Dispose()
