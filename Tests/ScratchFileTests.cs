@@ -1,9 +1,8 @@
-using BinEd;
 using System.Reflection;
 
 namespace Tests
 {
-    public class Tests
+    public class ScratchFileTests
     {
         [SetUp]
         public void Setup()
