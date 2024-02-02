@@ -1,4 +1,6 @@
-﻿namespace BinEd
+﻿using System.Diagnostics;
+
+namespace BinEd
 {
     /// <summary>
     /// Restores stream position to initial value when disposed
@@ -11,7 +13,18 @@
 
         private bool disposed;
 
+        /// <summary>
+        /// Gets the position that the stream is restored to
+        /// when this instance is disposed
+        /// </summary>
         public long Position { get; }
+
+        /// <summary>
+        /// Gets or sets whether the position should be restored or not.
+        /// If set to false, the position is not restored when this instance is disposed
+        /// </summary>
+        /// <remarks>Default is true</remarks>
+        public bool Restore { get; set; }
 
         public PosRestore(Stream stream)
         {
@@ -23,6 +36,7 @@
 
             _stream = stream;
             Position = stream.Position;
+            Restore = true;
         }
 
         public void Dispose()
@@ -35,15 +49,24 @@
                 {
                     return;
                 }
-                try
+                Debug.Print("Disposing {0}", nameof(PosRestore));
+                if (Restore)
                 {
-                    _stream.Position = Position;
-                    disposed = true;
+                    try
+                    {
+                        _stream.Position = Position;
+                    }
+                    catch
+                    {
+                        Debug.Print("Failed to restore position to {0}", Position);
+                        //NOOP
+                    }
                 }
-                catch
+                else
                 {
-                    //NOOP
+                    Debug.Print("User disabled stream restore. Will not restore position to {0}", Position);
                 }
+                disposed = true;
             }
         }
     }
