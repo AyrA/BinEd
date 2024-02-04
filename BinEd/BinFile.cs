@@ -9,7 +9,7 @@
         public bool Readonly { get; private set; }
         public string FileName => filename;
         public bool EOF => source.Position == source.Length;
-        public long Position { get => source.Position; set => source.Position = value; }
+        public long Position => source.Position;
 
         public BinFile(string fileName, bool create)
         {
@@ -26,6 +26,10 @@
             else
             {
                 var fi = new FileInfo(fileName);
+                if (!fi.Exists)
+                {
+                    throw new IOException($"'{fileName}' does not exist");
+                }
                 if (fi.Attributes.HasFlag(FileAttributes.Hidden) || fi.Attributes.HasFlag(FileAttributes.System))
                 {
                     throw new IOException($"Refusing to open '{fileName}' because it's marked as hidden or system. To edit this file, remove the offending attributes");
@@ -33,6 +37,13 @@
                 Readonly = fi.Attributes.HasFlag(FileAttributes.ReadOnly);
                 source = File.Open(fileName, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
             }
+        }
+
+        public void Seek(long position)
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(position, 0);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(position, source.Length);
+            source.Seek(position, SeekOrigin.Begin);
         }
 
         public void Truncate(long? size)
